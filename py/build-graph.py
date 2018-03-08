@@ -8,6 +8,8 @@ import MBS_analysis as mbs
 
 def main(csv_path, graph_path):
     print("Creating dataframe...")
+    print(csv_path)
+    print(graph_path)
     df = mbs.make_df(csv_path)
     print("Done. Creating bipartite simple graph...")
     g = mbs.patient_doctor_graph(df)
