@@ -11,8 +11,6 @@
 DATA_RAW=/srv/scratch/ppcs/data-raw/ 
 GRAPHS=/srv/scratch/ppcs/pickle/graphs/
 
-module add python/3.6.4-gcc6
-
 cd $DATA_RAW
 for FILENAME in *.csv 
 do 

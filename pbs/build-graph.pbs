@@ -9,8 +9,9 @@
 #PBS -V
 
 module add python/3.6.4-gcc6
+mkdir -p $GRAPHS
 
-python \
+python3 \
 /srv/scratch/ppcs/doctor-patient-networks/py/build-graph.py \
 $DATA_RAW$FILENAME \
 $GRAPHS$FILENAME

@@ -10,11 +10,11 @@ def main(csv_path, graph_path):
     print("Creating dataframe...")
     df = mbs.make_df(csv_path)
     print("Done. Creating bipartite simple graph...")
-    el = edge_list_bi(df)
-    g = make_bipartite_simple_graph(el, SPRtab)
-    add_vp_SPRPRAC(g)
+    g = mbs.patient_doctor_graph(df)
     print("Done. Pickling graph at", graph_path, "...")
-    pickle.dump(g, open(graph_path, "wb"))
+    with open(graph_path, 'wb') as fo:
+        pickle.dump(g, fo)
+        
     print("Done.")
     
 
