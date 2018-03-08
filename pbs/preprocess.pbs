@@ -15,8 +15,7 @@ cd $DATA_RAW
 
 for FILENAME in *.csv 
 do 
-    CSV=$DATA_RAW$FILENAME
-    export CSV GRAPHS FILENAME
+    export DATA_RAW GRAPHS FILENAME
     echo "Submitting $DATA_RAW$FILENAME"
     qsub /srv/scratch/ppcs/doctor-patient-networks/pbs/build-graph.pbs 
 done 
