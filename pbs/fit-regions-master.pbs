@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N preprocess
+#PBS -N fit-regions-master
 #PBS -l nodes=1:ppn=1
 #PBS -l vmem=1gb
 #PBS -l walltime=12:00:00
@@ -14,7 +14,7 @@ mkdir -p $BLOCKMODELS
 
 cd $GRAPHS
 
-for FILENAME in *.csv 
+for FILENAME in *.p
 do 
     export GRAPHS BLOCKMODELS FILENAME
     echo "Submitting $GRAPHS$FILENAME"
