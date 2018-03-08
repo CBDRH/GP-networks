@@ -116,12 +116,14 @@ def extract_PPCs(state):
     for k in doctor_bidx:
         active.a = (bs[0] == k)
         gt.infect_vertex_property(g, active, [True])
-        g.set_vertex_filter(active)
-        active_comp = gt.label_components(g)[0]
-        active.a = active.a & g.vp.doctor.a
-        for v in g.vertices():
-            component[v] = (k, active_comp[v])            
-        g.clear_filters()
+        try:
+            g.set_vertex_filter(active)
+            active_comp = gt.label_components(g)[0]
+            active.a = active.a & g.vp.doctor.a
+            for v in g.vertices():
+                component[v] = (k, active_comp[v])            
+        finally:
+            g.clear_filters()
 
     comp_dict = dict()
     block_tuples = list(set([component[v] for v in g.vertices()]))
@@ -140,12 +142,6 @@ def extract_PPCs(state):
     
     return(gt.NestedBlockState(g, new_bs))
 
-
-def get_state(path="../pickle/blockmodels/complete2014reg3.p"): 
-    with open(path, 'rb') as fo: 
-        state = pickle.load(fo)
-    import conn_comp
-    return(conn_comp.divide_by_component(state))
 
 def PPCids(state):
     g = state.g
