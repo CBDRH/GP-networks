@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#PBS -N preprocess
+#PBS -l nodes=1:ppn=1
+#PBS -l vmem=1gb
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -V
+
+module add python/3.6.4-gcc6
+
+python \
+/srv/scratch/ppcs/doctor-patient-networks/py/build-graph.py \
+$DATA_RAW$FILENAME \
+$GRAPHS$FILENAME
