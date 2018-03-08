@@ -5,8 +5,9 @@ import numpy as np
 # argument, it post-processes all files in this directory.
 
 def add_vp_PPC(state):
-    """Adds a vertex property 'PPC' to the graph g in an object 'state' of class
-    gt.BlockState. A PPC is defined as a connected component found in a block.
+    """Adds a vertex property 'PPC' to the graph g in an object 'state' of 
+    class gt.BlockState. A PPC is defined as a connected component found in a 
+    block.
     """
     g = state.g
     if 'PPC' in state.g.vp:
@@ -35,7 +36,8 @@ def add_vp_PPC(state):
         if not g.vp.doctor[v]:
             continue
         PPC[v] = PPC_id[blockpair[g.vp.label[v]]]
-        # closes the circle: maps vertex -> label -> (block, component) -> new_block
+        # closes the circle: maps vertex -> label -> (block, component) -> 
+        # new_block
     g.vp['PPC'] = PPC
     return(state)
 
@@ -58,17 +60,17 @@ if __name__ == "__main__":
     # reads in a blockstate at path given by first argument
     # outputs a csv file mapping GPs to PPCs at path given by second argument
     import sys
-    import cPickle as pickle
+    import pickle
     blockstate_path = sys.argv[1]
     ppc_path        = sys.argv[2]
-    print "---------------------------------------------------"
-    print "Postprocessing", blockstate_path
+    print("---------------------------------------------------")
+    print("Postprocessing", blockstate_path)
     try:
         with open(blockstate_path, 'rb') as fo:
             state = pickle.load(fo)
-        print "Entropy:", state.entropy()
+        print("Entropy:", state.entropy())
         state = add_vp_PPC(state)
-        print "Number of PPCs:", len(np.unique(state.g.vp.PPC.a))
+        print("Number of PPCs:", len(np.unique(state.g.vp.PPC.a)))
         write_PPCs(state, ppc_path)
     except EOFError:
-        print "Problem with pickled file."
+        print("Problem with pickled file.")

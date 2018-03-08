@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#PBS -N fit-region
+#PBS -l nodes=1:ppn=1
+#PBS -l vmem=20gb
+#PBS -l walltime=10:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -t 1-5
+#PBS -V
+
+module add python/2.7.12-gcc6
+
+BLOCKSTATE_PATH="$OUT_FOLDER/blockstates/$FILENAME-region-$REGION_NUM-blockstate-$PBS_ARRAYID.p"
+PPC_PATH="$OUT_FOLDER/ppcs/$FILENAME-region-$REGION_NUM-PPCs-$PBS_ARRAYID.csv"
+echo "Reading graph from $GRAPH_PATH"
+echo "Saving blockstate to $BLOCKSTATE_PATH"
+echo "Saving PPCs to $PPC_PATH"
+
+python $HOME/GPnetworks/py/graph_to_blockmodel.py \
+  --infile $GRAPH_PATH \
+  --outfile $BLOCKSTATE_PATH \
+  --bipartite doctor \
+  --regions $REGION_NUM
+
+echo "Postprocessing..."
+python $HOME/GPnetworks/py/postprocess.py $BLOCKSTATE_PATH $PPC_PATH

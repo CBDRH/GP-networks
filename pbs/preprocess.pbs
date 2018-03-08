@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#PBS -N preprocess
+#PBS -l nodes=1:ppn=1
+#PBS -l vmem=12gb
+#PBS -l walltime=8:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -V
+
+module add python/2.7.12-gcc6
+
+echo "Reading csv file from $CSV_PATH"
+GRAPH_PATH="$OUT_FOLDER/graphs/$FILENAME-graph.p"
+echo "Saving graph to $GRAPH_PATH"
+python $HOME/GPnetworks/py/preprocess.py $CSV_PATH $GRAPH_PATH
+export GRAPH_PATH OUT_FOLDER FILENAME
+cd $HOME/GPnetworks/logs
+qsub $HOME/GPnetworks/jobs/fit-blockmodels.pbs

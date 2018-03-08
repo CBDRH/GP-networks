@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#PBS -N fit-blockmodels
+#PBS -l nodes=1:ppn=1
+#PBS -l vmem=1gb
+#PBS -l walltime=1:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -V
+
+cd $HOME/GPnetworks/logs
+export GRAPH_PATH OUT_FOLDER FILENAME
+export REGION_NUM=1
+qsub $HOME/GPnetworks/jobs/fit-region.pbs
+export REGION_NUM=2
+qsub $HOME/GPnetworks/jobs/fit-region.pbs
+export REGION_NUM=3
+qsub $HOME/GPnetworks/jobs/fit-region.pbs
+export REGION_NUM=4
+qsub $HOME/GPnetworks/jobs/fit-region.pbs
+export REGION_NUM=5
+qsub $HOME/GPnetworks/jobs/fit-region.pbs
