@@ -15,8 +15,8 @@ def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
     with open(inpath, 'rb') as fo:
         g = pickle.load(fo)
     
-    with Pool(8) as p: 
-        candidate_models = p.map(thread, [g]*8)
+    with Pool(4) as p: 
+        candidate_models = p.map(thread, [g]*4)
     
     entropies = list(map(lambda x: x.entropy(), candidate_models))
     print("There were", len(np.unique(entropies)), "entropy values.")

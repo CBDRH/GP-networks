@@ -13,5 +13,5 @@ module add python/3.6.4-gcc6
 
 python3 /srv/scratch/ppcs/doctor-patient-networks/py/fit-blockmodel.py \
   --infile $GRAPHS$FILENAME \
-  --outfile $BLOCKMODELS$FILENAME \
+  --outfile $BLOCKMODELS$FILENAME$PBS_ARRAYID \
   --regions $PBS_ARRAYID
