@@ -14,4 +14,4 @@ mkdir -p $GRAPHS
 python3 \
 /srv/scratch/ppcs/doctor-patient-networks/py/build-graph.py \
 $DATA_RAW$FILENAME \
-$GRAPHS$FILENAME
+"$GRAPHS$FILENAME.p"

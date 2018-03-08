@@ -3,37 +3,26 @@ import pickle
 import time
 import argparse
 import numpy as np
+import MBS_analysis as mbs 
+from multiprocessing import Pool 
+
+def thread(g):
+    state = mbs.blockmodel(g, regions, deg_corr, bipartite, verbose=True)
+    return(state)
 
 def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
     start_time = time.time()    
     with open(inpath, 'rb') as fo:
-        g = pickle.load(fo)    
-    print("Graph loaded with", g.num_vertices(), "vertices and", g.num_edges(),
-          "edges.")
-    gt.remove_parallel_edges(g)
-    print("After removal of parallel edges:", g.num_vertices(), "vertices", 
-          g.num_edges(), "edges.")
+        g = pickle.load(fo)
     
-    # Drop all vertices not from regions of interest
-    vfilt = g.new_vertex_property('bool', val=False)
-    for k in regions:
-        vfilt.a = np.logical_or(vfilt.a, g.vp.sprstate.a==int(k))
-    gt.infect_vertex_property(g, vfilt, vals=[True])
-    g.set_vertex_filter(vfilt)
-    g.purge_vertices()
-    g.clear_filters()
-    print("After removing vertices not from regions", regions)
-    print("Vertices:", g.num_vertices(), "Edges:", g.num_edges())
-
-    state_args = dict()
-    if bipartite:
-        (check, vp) = gt.is_bipartite(g, partition=True)
-        state_args['pclabel'] = vp
-
-    print("state_args=", state_args)
+    with Pool(8) as p: 
+        candidate_models = p.map(thread, [g]*8)
     
-    state = gt.minimize_nested_blockmodel_dl(g, deg_corr=deg_corr,
-            state_args=state_args, verbose=True)
+    entropies = list(map(lambda x: x.entropy(), candidate_models))
+    print("There were", len(np.unique(entropies)), "entropy values.")
+    keep = np.argmax(entropies)
+    
+    state = candidate_models[keep]
     
     with open(outpath, 'wb') as save_to:
         pickle.dump(state, save_to, -1)

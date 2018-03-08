@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#PBS -N preprocess
+#PBS -l nodes=1:ppn=1
+#PBS -l vmem=1gb
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -V
+
+GRAPHS=/srv/scratch/ppcs/pickle/graphs/
+BLOCKMODELS=/srv/scratch/ppcs/pickle/blockmodels/
+mkdir -p $BLOCKMODELS
+
+cd $GRAPHS
+
+for FILENAME in *.csv 
+do 
+    export GRAPHS BLOCKMODELS FILENAME
+    echo "Submitting $GRAPHS$FILENAME"
+    qsub /srv/scratch/ppcs/doctor-patient-networks/pbs/fit-regions.pbs 
+done 

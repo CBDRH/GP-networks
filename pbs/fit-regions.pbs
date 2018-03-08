@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#PBS -N fit-regions
+#PBS -l nodes=1:ppn=8
+#PBS -l vmem=64gb
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -m ae
+#PBS -t 1-5
+#PBS -V
+
+module add python/3.6.4-gcc6
+
+python3 /srv/scratch/ppcs/doctor-patient-networks/py/fit-blockmodel.py \
+  --infile $GRAPHS$FILENAME \
+  --outfile $BLOCKMODELS$FILENAME \
+  --regions $PBS_ARRAYID
