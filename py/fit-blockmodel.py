@@ -23,6 +23,7 @@ def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
     keep = np.argmax(entropies)
     
     state = candidate_models[keep]
+    state = mbs.extract_PPCs(state)
     
     with open(outpath, 'wb') as save_to:
         pickle.dump(state, save_to, -1)

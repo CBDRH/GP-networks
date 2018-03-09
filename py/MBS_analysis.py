@@ -98,7 +98,8 @@ def extract_PPCs(state):
 
     Returns
     -------
-    None
+    A NestedBlockState with an additional layer at the bottom, 
+    representing the PPCs. 
     """
     
     g = state.g
@@ -161,4 +162,12 @@ def PPCgraph(state,k):
         h = g.copy()
     finally:
         g.clear_filters()
+    h.purge_vertices()
     return(h)
+
+def plot_PPCgraph(g, output=None):
+    size    = g.new_vertex_property("float")
+    size.a  = 5 + g.vp.doctor.a * 17
+    gt.graph_draw(g, vertex_size=size, vertex_fill_color=g.vp.doctor,
+                vorder=g.vp.doctor, 
+                output=output)
