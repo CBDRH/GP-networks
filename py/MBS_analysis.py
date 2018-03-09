@@ -171,3 +171,43 @@ def plot_PPCgraph(g, output=None):
     gt.graph_draw(g, vertex_size=size, vertex_fill_color=g.vp.doctor,
                 vorder=g.vp.doctor, 
                 output=output)
+
+
+def add_props(g):
+    """
+    Adds useful vertex and edge properties to the graph g.
+    """
+    g.ep['visits'] = g.new_edge_property('int')
+    g.ep['pnv'] = g.new_edge_property('float')
+    g.vp['upc'] = g.new_vertex_property('float')
+    g.vp['apt'] = g.new_vertex_property('float')
+
+    g.ep.visits.a = g.ep.bulkD.a + g.ep.bulkP.a
+    weighted_deg = g.degree_property_map('total', g.ep.visits)
+    
+    def pat_normalized_visits(e):
+        pat = e.source()
+        assert(g.vp.doctor[pat] == 0)
+        return(g.ep.visits[e] / weighted_deg[pat])
+
+    g.ep.pnv.a = [pat_normalized_visits(e) for e in g.edges()]
+    print("pnv done.")
+    
+    def patient_upc(v):
+        if g.vp.doctor[v]:
+            return(0)
+        else: 
+            visit_list = [g.ep.visits[e] for e in v.all_edges()]
+            return(max(visit_list) / sum(visit_list))
+    g.vp.upc.a = [patient_upc(v) for v in g.vertices()]    
+    print("upc done.")
+
+    def avg_pat_time(v):
+        if not g.vp.doctor[v]:
+            return(0)
+        else:
+            visit_list = [g.ep.visits[e] for e in v.all_edges()]
+            pat_degs   = [weighted_deg[n] for n in v.all_neighbours()]
+            return(sum(visit_list) / sum(pat_degs))            
+    g.vp.apt.a = [avg_pat_time(v) for v in g.vertices()]
+    print("apt done.")
