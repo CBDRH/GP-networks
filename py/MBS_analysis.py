@@ -173,14 +173,16 @@ def plot_PPCgraph(g, output=None):
                 output=output)
 
 
-def add_props(g):
+def add_props(s):
     """
     Adds useful vertex and edge properties to the graph g.
     """
+    g = s.g
     g.ep['visits'] = g.new_edge_property('int')
     g.ep['pnv'] = g.new_edge_property('float')
     g.vp['upc'] = g.new_vertex_property('float')
     g.vp['apt'] = g.new_vertex_property('float')
+    g.vp['uppcc'] = g.new_vertex_property('float')
 
     g.ep.visits.a = g.ep.bulkD.a + g.ep.bulkP.a
     weighted_deg = g.degree_property_map('total', g.ep.visits)
@@ -211,3 +213,33 @@ def add_props(g):
             return(sum(visit_list) / sum(pat_degs))            
     g.vp.apt.a = [avg_pat_time(v) for v in g.vertices()]
     print("apt done.")
+
+    # usual PPC continuity
+    def uppcc(v):
+        from collections import Counter
+        if g.vp.doctor[v]:
+            return(0)
+        else:
+            es = list(v.all_edges())
+            num_visits = [g.ep.visits[e] for e in es]
+            neigh_idx = [g.vertex_index[e.target()] for e in es]
+            for i in neigh_idx:
+                assert(g.vp.doctor[g.vertex(i)])
+            PPC_idx    = s.get_bs()[0][neigh_idx]
+            c = Counter()
+            for k in range(len(PPC_idx)): 
+                c[PPC_idx[k]] += num_visits[k]
+            return(c.most_common()[0][1] / sum(num_visits))
+    g.vp.uppcc.a = [uppcc(v) for v in g.vertices()]
+    print("uppcc done.")
+
+def get_ppc_stats(s):
+    def ppc_stats(k):
+        g = PPCgraph(s, k)
+        mean_upcs = np.mean([g.vp.upc[v] for v in g.vertices() if not g.vp.doctor[v]])
+        mean_uppccs = np.mean([g.vp.uppcc[v] for v in g.vertices() if not g.vp.doctor[v]])
+        mean_apt  = np.mean([g.vp.apt[v] for v in g.vertices() if g.vp.doctor[v]])
+        mean_deg = np.mean([g.degree_property_map('total')[v] for v in g.vertices() if g.vp.doctor[v]])
+        return (mean_upcs, mean_uppccs, mean_apt, mean_deg)
+
+    return list(map(ppc_stats, range(len(PPCids(s)))))
