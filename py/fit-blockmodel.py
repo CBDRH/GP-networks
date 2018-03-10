@@ -6,8 +6,10 @@ import numpy as np
 import MBS_analysis as mbs 
 from multiprocessing import Pool 
 
-def thread(g):
-    state = mbs.blockmodel(g, regions, deg_corr, bipartite, verbose=True)
+
+def thread(g_rseed):
+    np.random.seed(g_rseed[1])
+    state = mbs.blockmodel(g_rseed[0].copy(), regions, deg_corr, bipartite, verbose=True)
     return(state)
 
 def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
@@ -15,11 +17,12 @@ def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
     with open(inpath, 'rb') as fo:
         g = pickle.load(fo)
     
+    seeds = [42, 1,3,5]
     with Pool(4) as p: 
-        candidate_models = p.map(thread, [g]*4)
+        candidate_models = p.map(thread, zip([g]*4, seeds))
     
     entropies = list(map(lambda x: x.entropy(), candidate_models))
-    print("There were", len(np.unique(entropies)), "entropy values.")
+    print("Entropies:", entropies)
     keep = np.argmax(entropies)
     
     state = candidate_models[keep]
