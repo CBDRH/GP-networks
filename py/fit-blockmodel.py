@@ -4,35 +4,17 @@ import time
 import argparse
 import numpy as np
 import MBS_analysis as mbs 
-from multiprocessing import Pool 
+import multiprocessing as mp
 
-
-def thread(g_rseed):
-    np.random.seed(g_rseed[1])
-    state = mbs.blockmodel(g_rseed[0].copy(), regions, deg_corr, bipartite, verbose=True)
+    
+def work_hard(kw):
+    print(kw)
+    np.random.seed(kw['seed'])
+    time.sleep(5 + np.random.randn(1)[0])
+    state = mbs.blockmodel(kw['g'], kw['regions'], kw['deg_corr'], kw['bipartite'], verbose=True)
     return(state)
 
-def main(inpath, regions, outpath, deg_corr=True, bipartite=True):
-    start_time = time.time()    
-    with open(inpath, 'rb') as fo:
-        g = pickle.load(fo)
-    
-    seeds = [42, 1,3,5]
-    with Pool(4) as p: 
-        candidate_models = p.map(thread, zip([g]*4, seeds))
-    
-    entropies = list(map(lambda x: x.entropy(), candidate_models))
-    print("Entropies:", entropies)
-    keep = np.argmax(entropies)
-    
-    state = candidate_models[keep]
-    state = mbs.extract_PPCs(state)
-    
-    with open(outpath, 'wb') as save_to:
-        pickle.dump(state, save_to, -1)
-    print("--- %s seconds ---" % (time.time() - start_time))
 
-    
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
@@ -55,4 +37,27 @@ if __name__ == "__main__":
     deg_corr = args.dc
     bipartite = args.bipartite
 
-    main(inpath, regions, outpath, deg_corr, bipartite)
+    start_time = time.time()    
+    with open(inpath, 'rb') as fo:
+        g = pickle.load(fo)
+
+    seeds = [42, 1]
+        
+    mp.set_start_method('spawn')
+    kws = []
+    for seed in seeds:
+        kws += [dict(g = g, regions = regions, deg_corr = deg_corr, 
+                    bipartite = bipartite, seed = seed)]
+    with mp.Pool(2) as p: 
+        candidate_models = p.map(work_hard, kws)
+    
+    entropies = list(map(lambda x: x.entropy(), candidate_models))
+    print("Entropies:", entropies)
+    keep = np.argmax(entropies)
+    
+    state = candidate_models[keep]
+    state = mbs.extract_PPCs(state)
+    
+    with open(outpath, 'wb') as save_to:
+        pickle.dump(state, save_to, -1)
+    print("--- %s seconds ---" % (time.time() - start_time))
