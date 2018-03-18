@@ -41,14 +41,14 @@ if __name__ == "__main__":
     with open(inpath, 'rb') as fo:
         g = pickle.load(fo)
 
-    seeds = [42, 1]
+    seeds = [42, 1, 33, 91]
         
     mp.set_start_method('spawn')
     kws = []
     for seed in seeds:
         kws += [dict(g = g, regions = regions, deg_corr = deg_corr, 
                     bipartite = bipartite, seed = seed)]
-    with mp.Pool(2) as p: 
+    with mp.Pool(4) as p: 
         candidate_models = p.map(work_hard, kws)
     
     entropies = list(map(lambda x: x.entropy(), candidate_models))
