@@ -53,7 +53,7 @@ if __name__ == "__main__":
     
     entropies = list(map(lambda x: x.entropy(), candidate_models))
     print("Entropies:", entropies)
-    keep = np.argmax(entropies)
+    keep = np.argmin(entropies)
     
     state = candidate_models[keep]
     state = mbs.extract_PPCs(state)
