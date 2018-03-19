@@ -193,7 +193,7 @@ def add_props(s):
         return(g.ep.visits[e] / weighted_deg[pat])
 
     g.ep.pnv.a = [pat_normalized_visits(e) for e in g.edges()]
-    print("pnv done.")
+    print("Patient normalized visits done.")
     
     def patient_upc(v):
         if g.vp.doctor[v]:
@@ -202,7 +202,7 @@ def add_props(s):
             visit_list = [g.ep.visits[e] for e in v.all_edges()]
             return(max(visit_list) / sum(visit_list))
     g.vp.upc.a = [patient_upc(v) for v in g.vertices()]    
-    print("upc done.")
+    print("Usual provider continuity done.")
 
     def avg_pat_time(v):
         if not g.vp.doctor[v]:
@@ -212,7 +212,7 @@ def add_props(s):
             pat_degs   = [weighted_deg[n] for n in v.all_neighbours()]
             return(sum(visit_list) / sum(pat_degs))            
     g.vp.apt.a = [avg_pat_time(v) for v in g.vertices()]
-    print("apt done.")
+    print("Average patient time done.")
 
     # usual PPC continuity
     def uppcc(v):
@@ -231,15 +231,60 @@ def add_props(s):
                 c[PPC_idx[k]] += num_visits[k]
             return(c.most_common()[0][1] / sum(num_visits))
     g.vp.uppcc.a = [uppcc(v) for v in g.vertices()]
-    print("uppcc done.")
+    print("Usual PPC continuity done.")
+    
+    # shared patient fraction
+    def PPC_shared_patient_fraction(PPCg):        
+        def shared_patient_fraction(v):
+            if PPCg.vp.doctor[v] == 0:
+                return(-1)
+            else:
+                pat_deg_list = [dpm[pat] for pat in v.all_neighbors()]
+                shared_patients = len([True for deg in pat_deg_list if deg > 1])
+                total_patients  = len(pat_deg_list)
+                return(shared_patients/total_patients)
+                
+        return(np.mean([shared_patient_fraction(v) for v in PPCg.vertices() if PPCg.vp.doctor[v]]))    
+    
+    
+    def PPC_patient_degree(PPCg):
+        def patient_degree(v):
+            if PPCg.vp.doctor[v] == 1:
+                return(-1)
+            else:
+                return(dpm[v])
+        return(np.mean([patient_degree(v) for v in PPCg.vertices() if not PPCg.vp.doctor[v]]))
+        
+
+    # Level 1 graph
+    l1g = s.get_bstack()[1]
+    spf = l1g.new_vertex_property('float', -1)
+    l1g.vp['spf'] = spf
+    ppd = l1g.new_vertex_property('float', -1)
+    l1g.vp['ppd'] = ppd
+    for k in range(len(PPCids(s))):
+        i = PPCids(s)[k]
+        PPCg = PPCgraph(s, k)
+        dpm = PPCg.degree_property_map("total")
+        spf[l1g.vertex(i)] = PPC_shared_patient_fraction(PPCg)
+        ppd[l1g.vertex(i)] = PPC_patient_degree(PPCg)
+    print("Shared patient fraction and PPC patient degree done.")
+        
 
 def get_ppc_stats(s):
+    l1g = s.get_bstack()[1]
+    PPC_idx = PPCids(s)
     def ppc_stats(k):
         g = PPCgraph(s, k)
+        i = PPC_idx[k]
+        mean_spf = l1g.vp.spf[l1g.vertex(i)]
+        mean_ppd = l1g.vp.ppd[l1g.vertex(i)]
         mean_upcs = np.mean([g.vp.upc[v] for v in g.vertices() if not g.vp.doctor[v]])
         mean_uppccs = np.mean([g.vp.uppcc[v] for v in g.vertices() if not g.vp.doctor[v]])
         mean_apt  = np.mean([g.vp.apt[v] for v in g.vertices() if g.vp.doctor[v]])
         mean_deg = np.mean([g.degree_property_map('total')[v] for v in g.vertices() if g.vp.doctor[v]])
-        return (mean_upcs, mean_uppccs, mean_apt, mean_deg)
-
-    return list(map(ppc_stats, range(len(PPCids(s)))))
+        row = (mean_spf, mean_ppd, mean_upcs, mean_uppccs, mean_apt, mean_deg)
+        row = list(map(lambda x: round(x,2), row))
+        return(row)
+    unfmt = list(map(ppc_stats, range(len(PPCids(s)))))
+    return(pd.DataFrame(data=unfmt, columns=['spf', 'ppd', 'upcs', 'uppccs', 'apt', 'deg']))
