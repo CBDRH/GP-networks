@@ -184,9 +184,10 @@ def add_props(s):
     g.vp['apt'] = g.new_vertex_property('float')
     g.vp['uppcc'] = g.new_vertex_property('float')
 
+    # EDGE properties
     g.ep.visits.a = g.ep.bulkD.a + g.ep.bulkP.a
     weighted_deg = g.degree_property_map('total', g.ep.visits)
-    
+
     def pat_normalized_visits(e):
         pat = e.source()
         assert(g.vp.doctor[pat] == 0)
@@ -195,26 +196,16 @@ def add_props(s):
     g.ep.pnv.a = [pat_normalized_visits(e) for e in g.edges()]
     print("Patient normalized visits done.")
     
+    # PATIENT PROPERTIES
+    # Usual Provider Continuity
     def patient_upc(v):
         if g.vp.doctor[v]:
             return(0)
         else: 
             visit_list = [g.ep.visits[e] for e in v.all_edges()]
             return(max(visit_list) / sum(visit_list))
-    g.vp.upc.a = [patient_upc(v) for v in g.vertices()]    
-    print("Usual provider continuity done.")
 
-    def avg_pat_time(v):
-        if not g.vp.doctor[v]:
-            return(0)
-        else:
-            visit_list = [g.ep.visits[e] for e in v.all_edges()]
-            pat_degs   = [weighted_deg[n] for n in v.all_neighbours()]
-            return(sum(visit_list) / sum(pat_degs))            
-    g.vp.apt.a = [avg_pat_time(v) for v in g.vertices()]
-    print("Average patient time done.")
-
-    # usual PPC continuity
+    # Usual PPC Continuity
     def uppcc(v):
         from collections import Counter
         if g.vp.doctor[v]:
@@ -230,10 +221,24 @@ def add_props(s):
             for k in range(len(PPC_idx)): 
                 c[PPC_idx[k]] += num_visits[k]
             return(c.most_common()[0][1] / sum(num_visits))
-    g.vp.uppcc.a = [uppcc(v) for v in g.vertices()]
-    print("Usual PPC continuity done.")
-    
-    # shared patient fraction
+        
+    # DOCTOR PROPERTIES
+    def avg_pat_time(v):
+        if not g.vp.doctor[v]:
+            return(0)
+        else:
+            visit_list = [g.ep.visits[e] for e in v.all_edges()]
+            pat_degs   = [weighted_deg[n] for n in v.all_neighbours()]
+            return(sum(visit_list) / sum(pat_degs))            
+
+    for v in g.vertices():
+        g.vp.upc[v] = patient_upc(v)
+        g.vp.uppcc[v] = uppcc(v)
+        g.vp.apt[v] = avg_pat_time(v)
+    print("Usual provider continuity, Usual PPC continuity and Average Patient Time done.")
+
+    # PPC PROPERTIES
+    # shared patient fraction, averaged over GPs in PPC
     def PPC_shared_patient_fraction(PPCg):        
         def shared_patient_fraction(v):
             if PPCg.vp.doctor[v] == 0:
@@ -246,7 +251,7 @@ def add_props(s):
                 
         return(np.mean([shared_patient_fraction(v) for v in PPCg.vertices() if PPCg.vp.doctor[v]]))    
     
-    
+    # patient degree, masked to within PPC, averaged over PPC
     def PPC_patient_degree(PPCg):
         def patient_degree(v):
             if PPCg.vp.doctor[v] == 1:
@@ -254,7 +259,7 @@ def add_props(s):
             else:
                 return(dpm[v])
         return(np.mean([patient_degree(v) for v in PPCg.vertices() if not PPCg.vp.doctor[v]]))
-        
+    
 
     # Level 1 graph
     l1g = s.get_bstack()[1]
@@ -270,9 +275,12 @@ def add_props(s):
         ppd[l1g.vertex(i)] = PPC_patient_degree(PPCg)
     print("Shared patient fraction and PPC patient degree done.")
         
+    return(s, l1g) # need to return the state, for Pool().map to work; 
+                   # also, l1g won't pickle as an attribute of s
 
-def get_ppc_stats(s):
-    l1g = s.get_bstack()[1]
+def get_ppc_stats(s_l1g):
+    s = s_l1g[0]
+    l1g = s_l1g[1]
     PPC_idx = PPCids(s)
     def ppc_stats(k):
         g = PPCgraph(s, k)
@@ -287,4 +295,4 @@ def get_ppc_stats(s):
         row = list(map(lambda x: round(x,2), row))
         return(row)
     unfmt = list(map(ppc_stats, range(len(PPCids(s)))))
-    return(pd.DataFrame(data=unfmt, columns=['spf', 'ppd', 'upcs', 'uppccs', 'apt', 'deg']))
+    return(pd.DataFrame(data=unfmt, columns=['spf', 'ppd', 'upc', 'uppcc', 'apt', 'deg']))
