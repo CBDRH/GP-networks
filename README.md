@@ -1,4 +1,4 @@
-# Supplemental material
+# Supplemental material for “The network structure of general practice in Australia: analysis of national claims data”
 
 This repository documents our computational work for the article
 
