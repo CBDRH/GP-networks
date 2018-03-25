@@ -7,6 +7,8 @@ ssh
 trash
 katana
 PPCpics
+PPCpics_old
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
