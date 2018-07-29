@@ -1,5 +1,4 @@
-Supplemental material for “The network structure of general practice in
-Australia: analysis of national claims data”
+Supplemental material for “Overcoming the data drought: exploring general practice in Australia by network analysis of big data”
 ================
 
 Contents:
